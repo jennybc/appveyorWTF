@@ -9,7 +9,7 @@ init:
 
 install:
   - echo %CD%
-  - ps: echo $PSScriptRoot
+  - ps: Write-Host $PSScriptRoot
   - ps: Bootstrap
 
 cache:
