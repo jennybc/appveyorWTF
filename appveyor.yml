@@ -12,10 +12,9 @@ install:
       if (-not $env:APPVEYOR_PULL_REQUEST_NUMBER)
       {
         nuget install secure-file -ExcludeVersion
-        secure-file\tools\secure-file -decrypt DESCRIPTION.enc -secret $env:my_secret -out DESCRIPTION-omg-please-work
+        secure-file\tools\secure-file -decrypt DESCRIPTION.enc -secret $env:my_secret -out supersecret
         pwd
       }
-  - cat DESCRIPTION-omg-please-work
   - ps: Bootstrap
 
 environment:
