@@ -12,6 +12,7 @@ install:
   - ps: pwd
   - nuget install secure-file -ExcludeVersion
   - secure-file\tools\secure-file -decrypt DESCRIPTION.enc -secret %my_secret% -out DESCRIPTION-decrypted
+  - cat DESCRIPTION-decrypted
   - ps: |
       if (-not $env:APPVEYOR_PULL_REQUEST_NUMBER)
       {
