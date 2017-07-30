@@ -1,2 +1,2 @@
-# appveyor-wtf
+# appveyorWTF
 WTF AppVeyor, WTF?
