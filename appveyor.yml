@@ -14,7 +14,7 @@ install:
         nuget install secure-file -ExcludeVersion
         secure-file\tools\secure-file -decrypt DESCRIPTION.enc -secret $env:my_secret -out supersecret
       }
-  - ls super*
+  - ps: Test-Path supersecret -PathType Leaf
   - ps: Bootstrap
 
 environment:
