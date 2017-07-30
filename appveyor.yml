@@ -16,7 +16,7 @@ install:
   - ps: |
       if (-not $env:APPVEYOR_PULL_REQUEST_NUMBER)
       {
-        secure-file\tools\secure-file -decrypt DESCRIPTION.enc -secret %my_secret% -out DESCRIPTION-decrypted
+        secure-file\tools\secure-file -decrypt DESCRIPTION.enc -secret $env:my_secret -out DESCRIPTION-decrypted
         pwd
       }
   - ps: Bootstrap
