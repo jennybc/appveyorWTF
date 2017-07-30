@@ -8,7 +8,9 @@ init:
         Import-Module '..\appveyor-tool.ps1'
 
 install:
-  ps: Bootstrap
+  - echo %CD%
+  - ps: echo $PSScriptRoot
+  - ps: Bootstrap
 
 cache:
   - C:\RLibrary
