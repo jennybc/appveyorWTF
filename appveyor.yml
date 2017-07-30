@@ -10,6 +10,11 @@ init:
 install:
   - echo %CD%
   - ps: Write-Host $PSScriptRoot
+  - ps: Write-Output $PSScriptRoot
+  - ps: Write-Debug $PSScriptRoot
+  - ps: Write-Verbose $PSScriptRoot
+  - ps: echo $PSScriptRoot
+  - ps: $PSScriptRoot
   - ps: Bootstrap
 
 cache:
