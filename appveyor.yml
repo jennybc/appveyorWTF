@@ -9,14 +9,14 @@ init:
 
 install:
   - echo %CD%
-  - ps: Write-Host $PSScriptRoot
-  - ps: Write-Output $PSScriptRoot
-  - ps: Write-Debug $PSScriptRoot
-  - ps: Write-Verbose $PSScriptRoot
-  - ps: echo $PSScriptRoot
-  - ps: $PSScriptRoot
-  - ps: Get-Location
   - ps: pwd
+  - ps: |
+      if (-not $env:APPVEYOR_PULL_REQUEST_NUMBER)
+      {
+        pwd
+        nuget install secure-file -ExcludeVersion
+        #secure-file\tools\secure-file -decrypt tests/testthat/av_testing-token.rds.enc -secret %my_secret% -out tests/testthat/testing-token.rds
+      }
   - ps: Bootstrap
 
 cache:
