@@ -12,14 +12,14 @@ install:
       if (-not $env:APPVEYOR_PULL_REQUEST_NUMBER)
       {
         nuget install secure-file -ExcludeVersion
-        secure-file\tools\secure-file -decrypt DESCRIPTION.enc -secret $env:my_secret -out supersecret
+        secure-file\tools\secure-file -decrypt tests/testthat/av_supersecret.enc -secret $env:my_secret -out tests/testthat/supersecret
       }
-  - ps: Test-Path supersecret -PathType Leaf
+  - ps: Test-Path tests/testthat/supersecret -PathType Leaf
   - ps: Bootstrap
 
 environment:
   my_secret:
-    secure: QpCP+JBTiREOX5R4YMRVNQ==
+    secure: cCzcfyH7ESZziA53h23oUw==
 
 cache:
   - C:\RLibrary

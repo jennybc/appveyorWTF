@@ -1,0 +1,124 @@
+---
+output:
+  github_document:
+    toc: true
+---
+
+# appveyorWTF
+
+[![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/github/jennybc/appveyorWTF?branch=master&svg=true)](https://ci.appveyor.com/project/jennybc/appveyorWTF)
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, echo = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "README-"
+)
+```
+
+## The build is fail
+
+I want this: Conditional decryption of a secure file on AppVeyor. My first several attempts did not work. Inspired by the professional crowd I'm running with these days, I resolved to stop fannying around in my real project and attack the problem in isolation. Hence this repo. I've also learned that I am the main beneficiary of these notes-to-self!
+
+Scenario:
+
+  * I have an R package developed on GitHub that I want to check on AppVeyor.
+  * Full testing requires access to secret info (IRL: an OAuth refresh token). However, even without this, partial testing is possible.
+  * I use [AppVeyor's support for secure files](https://www.appveyor.com/docs/how-to/secure-files/) to make the secret available to AppVeyor builds triggered by pushes to the GitHub repo. Yay! It works!
+  * However, I hope to get pull requests, internal or external, and I want AppVeyor to check those PRs too. Basic `R CMD check` should be run and the tests that can run without the secret info.
+    - If I do nothing, the build for a pull request will always fail, because the attempt to decrypt the secret info will fail, because secure variables are not set for PRs. We will never even make it to `R CMD check`, much less the unit tests.
+    - AppVeyor will give us zero useful information for PRs. *OK, that's not quite true for internal PRs, because the build associated with the internal branch will have access to secure variables. This just makes the failed PR build even more aggravating to me. Yo AppVeyor, the PR is coming from inside the house!*
+    - Also, [the boy who cried wolf](https://en.wikipedia.org/wiki/The_Boy_Who_Cried_Wolf) teaches us that any system that emits lots of false positives eventually gets ignored, so this dysfunctional situation undermines the value of continuous integration.
+    
+How do you set up a package for graceful checking with and without the secret info? How do you write `appveyor.yml` to only attempt decryption in situations where it will succeed?
+
+## Step 1: Encryption + conditional decryption
+
+`appveyor.yml` is the config file for AppVeyor. This is where we'll provide instructions to decrypt the secure file when possible, i.e. for builds that are NOT associated with a pull request. I hate writing `appveyor.yml`, even more than I hate writing `.travis.yml`, because it is an unholy mix of straight up YAML, Windows CMD, and PowerShell.
+
+### Resources consulted:
+
+  * [R packages, secret keys, and testing on AppVeyor](https://matthewlincoln.net/2016/05/13/r-packages-secret-keys-and-appveyor.html), a blog post by Matt Lincoln. It pleases me that Matt was, in fact, adapting an approach I wrote up for doing similar things on Travis. And my Travis approach was developed from a initial seed planted by Noam Ross. This is a great illustration of the value of open and social coding.
+  * GitHub searches of other people's `appveyor.yml` files. Example:
+    - <https://github.com/search?utf8=✓&q=secure-file+filename%3Aappveyor.yml&type=>
+  * Searching StackOverflow for PowerShell syntax. Example:
+    - <https://stackoverflow.com/search?q=powershell+file+exists>
+    
+### Encrypt the `supersecret` file on the development machine
+
+  * Install `nuget` for Mac OS via homebrew.
+    ```
+    brew install nuget
+    ```
+    This also installs `mono`, which is needed to run the Windows executables you will soon install via `nuget`.
+  * Use `nuget` to install `secure-file`, a utility that "for encrypting/decrypting arbitrary files using the Rijndael method". Do this in the directory where you want `secure-file` to live or be prepared to move it after the fact.
+    ```
+    nuget install secure-file -ExcludeVersion
+    ```
+  * Use `mono` to call `secure-file` to encrypt the `supersecret` file.
+    ```
+    mono ~/bin/secure-file/tools/secure-file.exe -encrypt tests/testthat/supersecret -out tests/testthat/av_supersecret.enc -secret AVSECRET
+    ```
+  * Visit AppVeyor's [Encrypt configuration data](https://ci.appveyor.com/tools/encrypt) page to set up a secure environment variable. Enter `AVSECRET` here as the "Value to encrypt" or, rather, whatever you used in its place above. Copy what AppVeyor returns as "Example usage in `appveyor.yml`", because you need to put it in `appveyor.yml`.
+  * Ignoring:
+    - gitignore the un-encrypted `supersecret` file.
+    - Rbuildignore the encrypted version, `av_supersecret.enc`.
+    - Do not gitignore the encrypted version, `av_supersecret.enc`. You must commit and push that.
+    - Rbuildignore the `secure-file` directory, even if it resides outside your package locally. On AppVeyor, it will be installed in the top-level directory of your package.
+  
+### Decrypt the `supersecret` file on AppVeyor. Or not.
+
+You can consult the `appveyor.yml` file here to see it in its full glory. But here's the heart of the matter re: conditional decryption. This limits the decryption attempt to non-pull-request builds and also prints a presence/absence test to the log for good measure.
+
+```yaml
+install:
+  - ps: |
+      if (-not $env:APPVEYOR_PULL_REQUEST_NUMBER)
+      {
+        nuget install secure-file -ExcludeVersion
+        secure-file\tools\secure-file -decrypt tests/testthat/av_supersecret.enc -secret $env:my_secret -out tests/testthat/supersecret
+      }
+  - ps: Test-Path supersecret -PathType Leaf
+  - ps: Bootstrap
+```
+
+Elsewhere in the file, you need to address the secure environment variable created earlier, like so:
+
+```yaml
+environment:
+  my_secret:
+    secure: cCzcfyH7ESZziA53h23oUw==
+```
+
+Gotchas (ask me how I know):
+
+  * Most decryption examples are written in CMD and address the secret like so: `-secret %my_secret%`. But I found more examples of conditional execution with PowerShell, which necessitates a different syntax `-secret $env:my_secret`.
+  * There are many opportunities to screw up the paths.
+  * The snippet AppVeyor gives you re: the secure variable will mention `my_variable`, but I, of course, called it `my_secret`.
+
+## Step 2: Custom test skipper
+
+I use [testthat](https://cran.r-project.org/package=testthat) for unit testing, which offers a [`skip()`](https://www.rdocumentation.org/packages/testthat/versions/1.0.2/topics/skip) function. `skip()` powers several built-in skippers, such as `skip_on_appveyor()`, which is handy, but too blunt for my current purposes. You can also use `skip()` to define custom test skippers, usually in `tests/testthat/helper.R`.
+
+In this toy example, `skip_if_no_secret()` will skip a test if the file `supersecret` cannot be found in the testing directory. BTW [rprojroot](https://cran.r-project.org/package=rprojroot) is another gem of a package that reduces the aggravation of building robust file paths. 
+
+```{r eval = FALSE}
+## define custom skipper in tests/testthat/helper.R
+skip_if_no_secret <- function() {
+  if (!file.exists(rprojroot::find_testthat_root_file("supersecret"))) {
+    skip("supersecret not available :(")
+  }
+}
+
+## later usage in a test that requires access to supersecret
+test_that("I can use the secret powers", {
+  skip_if_no_secret()
+  expect_true(file.exists(
+    rprojroot::find_testthat_root_file("supersecret")
+  ))
+})
+```
+
+In real life, the `supersecret` file holds our token. It will be absent for builds associated with pull requests, so `skip_if_no_secret()` lets us gracefully skip those tests and move on.
