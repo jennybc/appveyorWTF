@@ -122,3 +122,5 @@ test_that("I can use the secret powers", {
 ```
 
 In real life, the `supersecret` file holds our token. It will be absent for builds associated with pull requests, so `skip_if_no_secret()` lets us gracefully skip those tests and move on.
+
+Purely a test of the PR behavior!
