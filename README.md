@@ -33,7 +33,7 @@ How do you set up a package for graceful checking with and without the secret in
 Step 1: Encryption + conditional decryption
 -------------------------------------------
 
-`appveyor.yml` is the config file for AppVeyor. This is where we'll provide instructions to decrypt the secure file when possible, i.e. for builds that are NOT associated with a pull request. I hate writing `appveyor.yml`, even more than I hate writing `.travis.yml`, because it is an unholy mix of straight up YAML, Windows CMD, and PowerShell.
+`appveyor.yml` is the config file for AppVeyor. This is where we'll provide instructions to decrypt the secure file when possible, i.e. for builds that are NOT associated with a pull request. I hate writing `appveyor.yml`, even more than I hate writing `.travis.yml`, because it is an unholy mix of straight up YAML, Windows CMD, and PowerShell. Luckily we can use `devtools::use_appveyor()` (brought to us by [r-appveyor](https://github.com/krlmlr/r-appveyor)) to get a basic `appveyor.yml` and refine it from there.
 
 ### Resources consulted:
 
@@ -50,7 +50,7 @@ Step 1: Encryption + conditional decryption
         brew install nuget
 
     This also installs `mono`, which is needed to run the Windows executables you will soon install via `nuget`.
--   Use `nuget` to install `secure-file`, a utility that "for encrypting/decrypting arbitrary files using the Rijndael method". Do this in the directory where you want `secure-file` to live or be prepared to move it after the fact.
+-   Use `nuget` to install `secure-file`, a utility "for encrypting/decrypting arbitrary files using the Rijndael method". Do this in the directory where you want `secure-file` to live or be prepared to move it after the fact.
 
         nuget install secure-file -ExcludeVersion
 
