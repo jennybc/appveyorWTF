@@ -32,8 +32,8 @@ build_script:
 
 test_script:
   - Rscript -e "Sys.getenv()"
-  - Rscript -e "Sys.getenv('R_USER_PROFILE')"
-  - Rscript -e "Sys.getenv('R_USER_ENVIRON')"
+  - Rscript -e "Sys.getenv('R_PROFILE_USER')"
+  - Rscript -e "Sys.getenv('R_ENVIRON_USER')"
   - travis-tool.sh run_tests
 
 on_failure:
