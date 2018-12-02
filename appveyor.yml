@@ -31,6 +31,7 @@ build_script:
   - travis-tool.sh install_deps
 
 test_script:
+  - Rscript -e "Sys.getenv()"
   - travis-tool.sh run_tests
 
 on_failure:
