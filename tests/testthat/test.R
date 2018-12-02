@@ -7,10 +7,9 @@ test_that("I can use the secret powers", {
   ))
 })
 
-test_that("R_PROFILE_USER is nonsense (force failure and reveal", {
-  expect_identical(Sys.getenv('R_PROFILE_USER'), "wtf")
-})
-
-test_that("R_ENVIRON_USER is nonsense (force failure and reveal", {
-  expect_identical(Sys.getenv('R_ENVIRON_USER'), "wtf")
+test_that("I can reveal R_PROFILE_USER and R_ENVIRON_USER (meant to fail)", {
+  expect_identical(
+    Sys.getenv(c("R_PROFILE_USER", "R_ENVIRON_USER")),
+    c("wtf", "wtf")
+  )
 })
