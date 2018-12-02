@@ -10,6 +10,6 @@ test_that("I can use the secret powers", {
 test_that("I can reveal R_PROFILE_USER and R_ENVIRON_USER (meant to fail)", {
   expect_identical(
     Sys.getenv(c("R_PROFILE_USER", "R_ENVIRON_USER")),
-    c("wtf", "wtf")
+    c("R_PROFILE_USER" = "wtf", "R_ENVIRON_USER" = "wtf")
   )
 })
